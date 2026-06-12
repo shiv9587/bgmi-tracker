@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useCallback, useRef } from "react";
 import { Upload, Cpu, Trophy, Users, Download, Trash2, Swords, Map, Target, Star, AlertCircle, CheckCircle } from "lucide-react";
 
