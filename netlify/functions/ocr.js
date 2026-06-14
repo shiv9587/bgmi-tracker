@@ -50,7 +50,7 @@ Rules:
           ]
         }],
         temperature: 0,
-        max_tokens: 512
+        max_tokens: 1024
       })
     });
 
