@@ -7,3 +7,8 @@
   from = "/api/ocr"
   to = "/.netlify/functions/ocr"
   status = 200
+
+[[redirects]]
+  from = "/api/db"
+  to = "/.netlify/functions/db"
+  status = 200
