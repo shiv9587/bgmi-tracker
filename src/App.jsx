@@ -1,4 +1,3 @@
-import React from "react";
 import { useState, useCallback, useRef } from "react";
 import { Upload, Cpu, Trophy, Users, Download, Trash2, Swords, Map, Target, Star, AlertCircle, CheckCircle } from "lucide-react";
 
@@ -15,6 +14,29 @@ const toB64 = file => new Promise((res,rej)=>{
 
 export default function BGMITracker() {
   const [matches, setMatches] = useState([]);
+  const [dbLoading, setDbLoading] = useState(true);
+
+  // Load matches from DB on mount
+  useEffect(() => {
+    fetch("/api/db")
+      .then(r => r.json())
+      .then(data => {
+        if(Array.isArray(data)) {
+          setMatches(data.map(m => ({
+            id: m.id,
+            matchNum: m.match_num,
+            map: m.map,
+            rank: m.rank,
+            placePts: m.place_pts,
+            teamKills: m.team_kills,
+            totalPts: m.total_pts,
+            players: m.players
+          })));
+        }
+        setDbLoading(false);
+      })
+      .catch(() => setDbLoading(false));
+  }, []);
   const [view, setView] = useState("dashboard");
   const [dragging, setDragging] = useState(false);
   const [ocrStatus, setOcrStatus] = useState(null);
@@ -63,19 +85,40 @@ export default function BGMITracker() {
     handleFile(e.dataTransfer.files[0]);
   }, [handleFile]);
 
-  const submitMatch = () => {
+  const submitMatch = async () => {
     const teamKills = simData.players.reduce((s,p)=>s+Number(p.kills),0);
     const placePts = getPlacePts(Number(simData.rank));
-    setMatches(prev=>[...prev,{
-      id:Date.now(), matchNum:prev.length+1,
-      map:simData.map, rank:Number(simData.rank),
-      placePts, teamKills, totalPts: placePts+teamKills,
-      players:simData.players.filter(p=>p.name).map(p=>({name:p.name,kills:Number(p.kills)}))
+    const newMatch = {
+      matchNum: matches.length + 1,
+      map: simData.map,
+      rank: Number(simData.rank),
+      placePts,
+      teamKills,
+      totalPts: placePts + teamKills,
+      players: simData.players.filter(p=>p.name).map(p=>({name:p.name, kills:Number(p.kills)}))
+    };
+    const res = await fetch("/api/db", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newMatch)
+    });
+    const saved = await res.json();
+    const m = saved[0];
+    setMatches(prev => [...prev, {
+      id: m.id, matchNum: m.match_num, map: m.map, rank: m.rank,
+      placePts: m.place_pts, teamKills: m.team_kills, totalPts: m.total_pts, players: m.players
     }]);
     setSimOpen(false); setPreviewUrl(null); setOcrStatus(null);
   };
 
-  const deleteMatch = id => setMatches(prev=>prev.filter(m=>m.id!==id));
+  const deleteMatch = async (id) => {
+    await fetch("/api/db", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id })
+    });
+    setMatches(prev => prev.filter(m => m.id !== id));
+  };
 
   const leaderboard = () => {
     const agg = {};
