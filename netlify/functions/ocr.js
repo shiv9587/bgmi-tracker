@@ -16,7 +16,7 @@ exports.handler = async function(event, context) {
 Return ONLY valid JSON, no markdown, no explanation.
 
 {
-  "map": "Erangel|Miramar|Rondo|Unknown",
+  "map": "Erangel|Miramar|Sanhok|Vikendi|Nusa|Livik|Unknown",
   "rank": <number 1-20>,
   "players": [
     {"name": "<exact name as shown>", "kills": <number>}
@@ -41,7 +41,7 @@ Rules:
         "X-Title": "BGMI Match Tracker"
       },
       body: JSON.stringify({
-        model: "google/gemma-4-31b-it:free",
+        model: "nvidia/nemotron-nano-12b-v2-vl:free",
         messages: [{
           role: "user",
           content: [
