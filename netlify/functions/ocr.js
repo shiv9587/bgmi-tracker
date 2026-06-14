@@ -41,7 +41,7 @@ Rules:
         "X-Title": "BGMI Match Tracker"
       },
       body: JSON.stringify({
-        model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+        model: "nvidia/nemotron-nano-12b-v2-vl:free",
         messages: [{
           role: "user",
           content: [
@@ -50,7 +50,7 @@ Rules:
           ]
         }],
         temperature: 0,
-        max_tokens: 1024
+        max_tokens: 512
       })
     });
 
@@ -58,10 +58,7 @@ Rules:
     if (data.error) return { statusCode: 400, headers, body: JSON.stringify({ error: data.error.message }) };
 
     const raw = data.choices?.[0]?.message?.content || "";
-    // Extract JSON object from response
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON found in response");
-    const clean = jsonMatch[0].trim();
+    const clean = raw.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(clean);
     return { statusCode: 200, headers, body: JSON.stringify(parsed) };
   } catch (err) {
