@@ -58,7 +58,10 @@ Rules:
     if (data.error) return { statusCode: 400, headers, body: JSON.stringify({ error: data.error.message }) };
 
     const raw = data.choices?.[0]?.message?.content || "";
-    const clean = raw.replace(/```json|```/g, "").trim();
+    // Extract JSON object from response
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("No JSON found in response");
+    const clean = jsonMatch[0].trim();
     const parsed = JSON.parse(clean);
     return { statusCode: 200, headers, body: JSON.stringify(parsed) };
   } catch (err) {
