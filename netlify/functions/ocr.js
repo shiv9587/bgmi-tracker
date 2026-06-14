@@ -41,7 +41,7 @@ Rules:
         "X-Title": "BGMI Match Tracker"
       },
       body: JSON.stringify({
-        model: "nvidia/nemotron-nano-12b-v2-vl:free",
+        model: "google/gemma-4-31b-it:free",
         messages: [{
           role: "user",
           content: [
