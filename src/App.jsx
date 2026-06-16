@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Upload, Cpu, Trophy, Users, Download, Trash2, Swords, Map, Target, Star, AlertCircle, CheckCircle } from "lucide-react";
 
 const PLACEMENT_PTS = {1:10,2:6,3:5,4:4,5:3,6:2,7:1,8:1};
@@ -13,30 +13,30 @@ const toB64 = file => new Promise((res,rej)=>{
 });
 
 export default function BGMITracker() {
+  const [teamCode, setTeamCode] = useState("");
+  const [teamCodeInput, setTeamCodeInput] = useState("");
+  const [teamCodeError, setTeamCodeError] = useState("");
   const [matches, setMatches] = useState([]);
-  const [dbLoading, setDbLoading] = useState(true);
+  const [dbLoading, setDbLoading] = useState(false);
 
-  // Load matches from DB on mount
-  useEffect(() => {
-    fetch("/api/db")
+  const enterTeam = () => {
+    const code = teamCodeInput.trim().toUpperCase();
+    if(code.length < 3) { setTeamCodeError("Minimum 3 characters chahiye"); return; }
+    setTeamCode(code);
+    setDbLoading(true);
+    fetch(`/api/db?team_code=${code}`)
       .then(r => r.json())
       .then(data => {
         if(Array.isArray(data)) {
           setMatches(data.map(m => ({
-            id: m.id,
-            matchNum: m.match_num,
-            map: m.map,
-            rank: m.rank,
-            placePts: m.place_pts,
-            teamKills: m.team_kills,
-            totalPts: m.total_pts,
-            players: m.players
+            id: m.id, matchNum: m.match_num, map: m.map, rank: m.rank,
+            placePts: m.place_pts, teamKills: m.team_kills, totalPts: m.total_pts, players: m.players
           })));
         }
         setDbLoading(false);
       })
       .catch(() => setDbLoading(false));
-  }, []);
+  };
   const [view, setView] = useState("dashboard");
   const [dragging, setDragging] = useState(false);
   const [ocrStatus, setOcrStatus] = useState(null);
@@ -115,7 +115,7 @@ export default function BGMITracker() {
     await fetch("/api/db", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id, teamCode })
     });
     setMatches(prev => prev.filter(m => m.id !== id));
   };
@@ -176,8 +176,34 @@ export default function BGMITracker() {
 
   return (
     <div style={S.wrap}>
+      {/* Team Code Entry Screen */}
+      {!teamCode && (
+        <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#0f1117"}}>
+          <div style={{background:"#1a1d27",border:"1px solid #2d3148",borderRadius:16,padding:36,width:380,maxWidth:"90vw",textAlign:"center"}}>
+            <Swords size={36} color="#f59e0b" style={{margin:"0 auto 16px"}}/>
+            <div style={{fontSize:22,fontWeight:700,color:"#fff",marginBottom:6}}>BGMI Match Tracker</div>
+            <div style={{fontSize:13,color:"#64748b",marginBottom:24}}>Apna Team Code enter karo — naya code likhoge toh naya data, purana code likhoge toh purana data milega</div>
+            <input
+              placeholder="Team Code (e.g. TEAM_BTX)"
+              style={{...S.inp,textAlign:"center",fontSize:15,fontWeight:600,letterSpacing:"1px",marginBottom:8,textTransform:"uppercase"}}
+              value={teamCodeInput}
+              onChange={e=>{ setTeamCodeInput(e.target.value); setTeamCodeError(""); }}
+              onKeyDown={e=>e.key==="Enter"&&enterTeam()}
+            />
+            {teamCodeError && <div style={{fontSize:12,color:"#f87171",marginBottom:8}}>{teamCodeError}</div>}
+            <button style={{...S.btn("primary"),width:"100%",justifyContent:"center",padding:"10px",fontSize:14}} onClick={enterTeam}>
+              <LogIn size={15}/> Enter
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Main App */}
+      {teamCode && <>
       <div style={S.header}>
-        <div style={S.logo}><Swords size={20} color="#f59e0b"/> BGMI <span style={{color:"#f59e0b"}}>Match Tracker</span></div>
+        <div style={S.logo}><Swords size={20} color="#f59e0b"/> BGMI <span style={{color:"#f59e0b"}}>Match Tracker</span>
+          {teamCode && <span style={{fontSize:11,background:"#f59e0b22",color:"#f59e0b",border:"1px solid #f59e0b44",borderRadius:99,padding:"2px 8px",marginLeft:8}}>{teamCode}</span>}
+        </div>
         <div style={S.nav}>
           <button style={S.navBtn(view==="dashboard")} onClick={()=>setView("dashboard")}>Dashboard</button>
           <button style={S.navBtn(view==="leaderboard")} onClick={()=>setView("leaderboard")}>Leaderboard</button>
@@ -185,6 +211,7 @@ export default function BGMITracker() {
         <div style={{display:"flex",gap:8}}>
           <button style={S.btn()} onClick={()=>exportData("json")}><Download size={13}/> JSON</button>
           <button style={S.btn()} onClick={()=>exportData("csv")}><Download size={13}/> CSV</button>
+          <button style={S.btn("danger")} onClick={()=>{setTeamCode("");setTeamCodeInput("");setMatches([]);}}><LogOut size={13}/> Exit</button>
         </div>
       </div>
 
@@ -341,6 +368,8 @@ export default function BGMITracker() {
           </div>
         </div>
       )}
+      {/* End Main App */}
+      </>}
     </div>
   );
 }
