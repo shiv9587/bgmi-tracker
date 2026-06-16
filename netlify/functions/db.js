@@ -17,14 +17,13 @@ exports.handler = async function(event) {
   };
 
   try {
-    // GET — fetch all matches
     if (event.httpMethod === "GET") {
-      const res = await fetch(`${base}?order=match_num.asc`, { headers: sbHeaders });
+      const team_code = event.queryStringParameters?.team_code || "default";
+      const res = await fetch(`${base}?team_code=eq.${team_code}&order=match_num.asc`, { headers: sbHeaders });
       const data = await res.json();
       return { statusCode: 200, headers, body: JSON.stringify(data) };
     }
 
-    // POST — save new match
     if (event.httpMethod === "POST") {
       const match = JSON.parse(event.body);
       const res = await fetch(base, {
@@ -37,17 +36,17 @@ exports.handler = async function(event) {
           place_pts: match.placePts,
           team_kills: match.teamKills,
           total_pts: match.totalPts,
-          players: match.players
+          players: match.players,
+          team_code: match.teamCode
         })
       });
       const data = await res.json();
       return { statusCode: 200, headers, body: JSON.stringify(data) };
     }
 
-    // DELETE — delete a match by id
     if (event.httpMethod === "DELETE") {
-      const { id } = JSON.parse(event.body);
-      await fetch(`${base}?id=eq.${id}`, {
+      const { id, teamCode } = JSON.parse(event.body);
+      await fetch(`${base}?id=eq.${id}&team_code=eq.${teamCode}`, {
         method: "DELETE",
         headers: sbHeaders
       });
