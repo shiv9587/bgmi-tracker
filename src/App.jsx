@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Upload, Cpu, Trophy, Users, Download, Trash2, Swords, Map, Target, Star, AlertCircle, CheckCircle } from "lucide-react";
+import { Upload, Cpu, Trophy, Users, Download, Trash2, Swords, Map, Target, Star, AlertCircle, CheckCircle, LogIn, LogOut } from "lucide-react";
 
 const PLACEMENT_PTS = {1:10,2:6,3:5,4:4,5:3,6:2,7:1,8:1};
 const MAPS = ["Erangel","Miramar","Sanhok","Vikendi","Nusa","Livik"];
