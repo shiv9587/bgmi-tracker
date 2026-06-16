@@ -50,11 +50,17 @@ Rules:
           ]
         }],
         temperature: 0,
-        max_tokens: 512
+        max_tokens: 1024
       })
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch(e) {
+      return { statusCode: 502, headers, body: JSON.stringify({ error: "OpenRouter server error or rate limit hit. Thodi der ruko aur retry karo." }) };
+    }
     if (data.error) return { statusCode: 400, headers, body: JSON.stringify({ error: data.error.message }) };
 
     const raw = data.choices?.[0]?.message?.content || "";
