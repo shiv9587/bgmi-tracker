@@ -1,15 +1,30 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
-import { Upload, Cpu, Trophy, Users, Download, Trash2, Swords, Map, Target, Star, AlertCircle, CheckCircle, LogIn, LogOut } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { Upload, Cpu, Trophy, Users, Download, Trash2, Swords, Map, Target, Star, AlertCircle, CheckCircle } from "lucide-react";
 
 const PLACEMENT_PTS = {1:10,2:6,3:5,4:4,5:3,6:2,7:1,8:1};
 const MAPS = ["Erangel","Miramar","Sanhok","Vikendi","Nusa","Livik"];
 const getPlacePts = r => PLACEMENT_PTS[r] ?? 0;
 
-const toB64 = file => new Promise((res,rej)=>{
-  const r = new FileReader();
-  r.onload = () => res(r.result.split(",")[1]);
-  r.onerror = () => rej(new Error("Read failed"));
-  r.readAsDataURL(file);
+const toB64 = file => new Promise((resolve,reject)=>{
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const maxDim = 1280;
+      let { width, height } = img;
+      if(width > height && width > maxDim) { height = height*maxDim/width; width = maxDim; }
+      else if(height > maxDim) { width = width*maxDim/height; height = maxDim; }
+      canvas.width = width; canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+      resolve(dataUrl.split(",")[1]);
+    };
+    img.onerror = () => reject(new Error("Image load failed"));
+    img.src = reader.result;
+  };
+  reader.onerror = () => reject(new Error("Read failed"));
+  reader.readAsDataURL(file);
 });
 
 export default function BGMITracker() {
@@ -50,7 +65,7 @@ export default function BGMITracker() {
     setOcrStatus("loading"); setOcrError("");
     try {
       const b64 = await toB64(file);
-      const mimeType = file.type || "image/jpeg";
+      const mimeType = "image/jpeg";
       const res = await fetch("/api/ocr", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -95,7 +110,8 @@ export default function BGMITracker() {
       placePts,
       teamKills,
       totalPts: placePts + teamKills,
-      players: simData.players.filter(p=>p.name).map(p=>({name:p.name, kills:Number(p.kills)}))
+      players: simData.players.filter(p=>p.name).map(p=>({name:p.name, kills:Number(p.kills)})),
+      teamCode
     };
     const res = await fetch("/api/db", {
       method: "POST",
